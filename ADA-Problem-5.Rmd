@@ -1,0 +1,293 @@
+## General things:
+
+Load in the dataset "zombies.csv" from my GitHub repo at https://github.com/difiore/ADA2016. This data includes the first and last name and gender of the entire population of 1000 people who have survived the zombie apocalypse and are now ekeing out an existence somewhere on the East Coast, along with several other variables (height, weight, age, number of years of education, number of zombies they have killed, and college major see here for info on major.
+
+```{r}
+zombie<-read.csv("https://raw.githubusercontent.com/difiore/ADA2016/master/zombies.csv", sep = ",", header=TRUE)
+
+```
+
+[1] Calculate the population mean and standard deviation for each quantitative random variable (height, weight, age, number of zombies killed, and years of education). NOTE: You will not want to use the built in var() and sd() commands as these are for samples.
+
+```{r}
+# Population means
+popmean<-function(x){sum(x)/length(x)}
+meanheight<-popmean(zombie$height) 
+meanweight<-popmean(zombie$weight)
+meanage<-popmean(zombie$age)
+meankill<-popmean(zombie$zombies_killed)
+meanedu<-popmean(zombie$years_of_education)
+means<-cbind(meanheight,meanweight,meanage,meankill,meanedu)
+means
+
+# Population standard deviations
+popvar<-function(x){sum((x - mean(x))^2)/(length(x))}
+popsd<-function(x){sqrt(popvar(x))}
+sdheight<-popsd(zombie$height)
+sdage<-popsd(zombie$age)
+sdweight<-popsd(zombie$weight)
+sdkill<-popsd(zombie$zombies_killed)
+sdedu<-popsd(zombie$years_of_education)
+sds<-cbind(sdheight, sdweight, sdage, sdkill,sdedu)
+sds
+```
+
+[2] Use ggplot and make boxplots of each of these variable by gender.
+
+```{r}
+library(ggplot2)
+#height
+ggplot(zombie, aes(factor(gender),height))+geom_boxplot()
+#weight
+ggplot(zombie, aes(factor(gender),weight))+geom_boxplot()
+#age
+ggplot(zombie, aes(factor(gender),age))+geom_boxplot()
+#kill
+ggplot(zombie, aes(factor(gender),zombies_killed))+geom_boxplot()
+#education
+ggplot(zombie, aes(factor(gender),years_of_education))+geom_boxplot()
+```
+
+[3] Use ggplot and make a scatterplots of height and weight in relation to age. Do these variables seem to be related? In what way?
+
+(1) height to age
+```{r}
+ggplot(zombie,(aes(height,age)))+geom_point()
+```
+
+(2) weight to age
+```{r}
+ggplot(zombie,(aes(weight,age)))+geom_point()
+```
+
+Generally it seems like there is a clearer relationship between height and age (somewhat linear) whereas the relationship between weight and age is more scattered.
+
+[4] Using histograms and Q-Q plots, check whether the quantitative variables seem to be drawn from a normal distribution. Which seem to be and which do not (hint: not all are drawn from the normal distribution)? For those that are not, can you determine what common distribution they are drawn from?
+
+(1) weight 
+```{r}
+hist(zombie$weight)
+qqnorm(zombie$weight, main = "Weight")
+qqline(zombie$weight, col = "blue")
+```
+
+normally distributed
+
+(2) height
+```{r}
+hist(zombie$height)
+qqnorm(zombie$height, main = "Height")
+qqline(zombie$height, col = "blue")
+```
+
+normally distributed
+
+(3) age
+```{r}
+hist(zombie$age)
+qqnorm(zombie$age, main = "Weight")
+qqline(zombie$age, col = "blue")
+```
+
+normally distributed
+
+(4) Zombies killed
+```{r}
+hist(zombie$zombies_killed)
+qqnorm(zombie$zombies_killed, main = "Weight")
+qqline(zombie$zombies_killed, col = "blue")
+```
+
+not normally distributed - Poisson distribution skewed to the right
+
+(5) Years of education
+```{r}
+hist(zombie$years_of_education)
+qqnorm(zombie$years_of_education, main = "Weight")
+qqline(zombie$years_of_education, col = "blue")
+```
+
+not normally distributed - Poisson distribution skewed to the right
+
+
+[5] Now use the sample() function to sample ONE subset of 30 zombies (without replacement) from this population and calculate the mean and sample standard deviation for each variable. Also estimate the standard error for each variable and construct the 95% confidence interval for each mean. Note that for the variables that are not drawn from the normal distribution, you will need to base your estimate of the CIs on some different distribution.
+
+(1) Create a subset of zombies (sample, n=30)
+
+```{r}
+zombie.subset<- zombie[sample(1:nrow(zombie), 30,replace=FALSE),]
+zombie.subset
+```
+
+(2) Calculate sample mean
+```{r}
+subset.mean.weight<-mean(zombie.subset$weight)
+subset.mean.height<-mean(zombie.subset$height)
+subset.mean.age<-mean(zombie.subset$age)
+subset.mean.kill<-mean(zombie.subset$zombies_killed)
+subset.mean.edu<-mean(zombie.subset$years_of_education)
+subset.means<-cbind(subset.mean.weight,subset.mean.height,subset.mean.age,subset.mean.kill,subset.mean.edu)
+subset.means
+```
+
+(3) Calculate sample sds (this time with the sd() function)
+```{r}
+subset.sd.weight<-sd(zombie.subset$weight)
+subset.sd.height<-sd(zombie.subset$height)
+subset.sd.age<-sd(zombie.subset$age)
+subset.sd.kill<-sd(zombie.subset$zombies_killed)
+subset.sd.edu<-sd(zombie.subset$years_of_education)
+subset.sd<-cbind(subset.sd.weight,subset.sd.height,subset.sd.age,subset.sd.kill,subset.sd.edu)
+subset.sd
+```
+
+(4) Calculate the standard errors (use var() function)
+```{r}
+Se<-function(x){sqrt(var(x)/length(x))}
+subset.se.weight<-Se(zombie.subset$weight)
+subset.se.height<-Se(zombie.subset$height)
+subset.se.age<-Se(zombie.subset$age)
+subset.se.kill<-Se(zombie.subset$zombies_killed)
+subset.se.edu<-Se(zombie.subset$years_of_education)
+subset.se<-cbind(subset.se.weight,subset.se.height,subset.se.age,subset.se.kill, subset.se.edu)
+subset.se
+``` 
+
+(5) Confidence intervals for normally distributed variables (weight,height,age) upper/lower
+```{r}
+# Weight
+Ci.weight<-c(subset.mean.weight + qnorm(0.975, mean = 0, sd = 1) * subset.se.weight, subset.mean.weight + qnorm(0.025, mean = 0, sd = 1) * subset.se.weight)
+Ci.weight
+
+# Height
+Ci.height<-c(subset.mean.height + qnorm(0.975, mean = 0, sd = 1) * subset.se.height, subset.mean.height + qnorm(0.025, mean = 0, sd = 1) * subset.se.height)
+Ci.height
+
+# Age
+Ci.age<-c(subset.mean.age + qnorm(0.975, mean = 0, sd = 1) * subset.se.age, subset.mean.age + qnorm(0.025, mean = 0, sd = 1) * subset.se.age)
+Ci.age
+```
+
+(6) Confidence intervals for the poisson distributions? (kills, education status) upper/lower
+```{r}
+# kills (poisson distribution)
+lambda.kills<-sum(zombie.subset$zombies_killed)/length(zombie.subset$zombies_killed) # lambda for this distribution?
+lambda.kills
+Ci.kills<-c(subset.mean.kill+qpois(0.975,lambda=lambda.kills)*subset.se.kill, subset.mean.kill+qpois(0.025, lambda=lambda.kills)*subset.se.kill)
+Ci.kills
+
+# education (poisson distribution)
+lambda.edu<-sum(zombie.subset$years_of_education)/length(zombie.subset$years_of_education) # lambda for this distribution?
+lambda.edu
+Ci.edu<-c(subset.mean.edu+qpois(0.975,lambda=lambda.edu)*subset.se.edu, subset.mean.edu+qpois(0.025, lambda=lambda.edu)*subset.se.edu)
+Ci.edu
+```
+
+
+[6] Now drawn 99 more random samples of 30 zombies out and calculate the mean for each of the these samples. Together with the first sample you drew out, you now have a set of 100 means for each variable (each based on 30 observations), which constitutes a sampling distribution for each variable. What are the means and standard deviations of this distribution for each variable? How do the standard deviations compare to the standard errors estimated in [5]? What do these sampling distributions look like? Are they normally distributed? What about for those variables that you concluded were not originally drawn from a normal distribution?
+
+I had a hard time picking 30 zombies as a whole every time, and work on them (maybe we can talk about it in class quickly?). I wonder if it is for bootstrapping technically the same if I just sample single variables/vectors (e.g weight, height)? 
+
+Weight
+```{r}
+weight.means<-NULL  
+n<-30
+for (i in 1:99) {weight.means[i]<-mean(sample(zombie$weight, n, replace = TRUE))}
+weight.means<-append(weight.means,subset.mean.weight)# append adds the single mean I calculated in [5]
+
+weight.sd<-NULL
+for (i in 1:99) {weight.sd[i]<-sd(sample(zombie$weight, n, replace = TRUE))}
+weight.sd<-append(weight.sd, subset.sd.weight)
+
+hist(weight.means)
+qqnorm(weight.means)
+qqline(weight.means)
+
+# Mean and SD of these distributions
+mean(weight.means)
+sd(weight.means)
+```
+
+Height
+```{r}
+height.means<-NULL  
+n<-30
+for (i in 1:99) {height.means[i]<-mean(sample(zombie$height, n, replace = TRUE))}
+height.means<-append(height.means,subset.mean.height)
+
+height.sd<-NULL
+for (i in 1:99) {height.sd[i]<-sd(sample(zombie$height, n, replace = TRUE))}
+height.sd<-append(height.sd, subset.sd.height)
+
+hist(height.means)
+qqnorm(height.means)
+qqline(height.means)
+
+# Mean and SD of these distributions
+mean(height.means)
+sd(height.means)
+
+```
+
+Age
+```{r}
+age.means<-NULL  
+n<-30
+for (i in 1:99) {age.means[i]<-mean(sample(zombie$age, n, replace = TRUE))}
+age.means<-append(age.means,subset.mean.age)
+
+age.sd<-NULL
+for (i in 1:99) {age.sd[i]<-sd(sample(zombie$age, n, replace = TRUE))}
+age.sd<-append(age.sd, subset.sd.age)
+
+hist(age.means)
+qqnorm(age.means)
+qqline(age.means)
+
+# Mean and SD of these distributions
+mean(age.means)
+sd(age.means)
+```
+
+Kills
+```{r}
+kill.means<-NULL  
+n<-30
+for (i in 1:99) {kill.means[i]<-mean(sample(zombie$zombies_killed, n, replace = TRUE))}
+kill.means<-append(kill.means,subset.mean.kill)
+
+kill.sd<-NULL
+for (i in 1:99) {kill.sd[i]<-sd(sample(zombie$zombies_killed, n, replace = TRUE))}
+kill.sd<-append(kill.sd, subset.sd.kill)
+
+hist(kill.means)
+qqnorm(kill.means)
+qqline(kill.means)
+
+# Mean and SD of these distributions
+mean(kill.means)
+sd(kill.means)
+```
+
+Education
+```{r}
+edu.means<-NULL  
+n<-30
+for (i in 1:99) {edu.means[i]<-mean(sample(zombie$years_of_education, n, replace = TRUE))}
+edu.means<-append(edu.means,subset.mean.edu)
+
+edu.sd<-NULL
+for (i in 1:99) {edu.sd[i]<-sd(sample(zombie$years_of_education, n, replace = TRUE))}
+edu.sd<-append(edu.sd, subset.sd.edu)
+
+hist(edu.means)
+qqnorm(edu.means)
+qqline(edu.means)
+
+
+# Mean and SD of these distributions
+mean(edu.means)
+sd(edu.means)
+```
+
+Generally it seems like the variables drawn from the two poisson distributions (age,kills) seem to be normally distributed now. Also bootstrapped means seem to be closer to the acual population means now. 
